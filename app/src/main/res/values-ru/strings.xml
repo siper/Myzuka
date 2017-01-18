@@ -4,4 +4,7 @@
     <string name="notification_download_finished">Загрузка завершена</string>
     <string name="notification_download_progress">Загрузка</string>
     <string name="notification_download_error">Ошибка загрузки</string>
+    <string name="main_menu_search">Поиск</string>
+    <string name="main_menu_settings">Настройки</string>
+    <string name="notification_download_error_file_deleted">Файл удален или больше недоступен</string>
 </resources>
