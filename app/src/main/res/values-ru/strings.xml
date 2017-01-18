@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Myzuka</string>
+    <string name="notification_download_finished">Загрузка завершена</string>
+    <string name="notification_download_progress">Загрузка</string>
+    <string name="notification_download_error">Ошибка загрузки</string>
+</resources>

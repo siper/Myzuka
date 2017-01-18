@@ -1,14 +1,21 @@
 package pro.siper.myzuka;
 
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.miguelcatalan.materialsearchview.MaterialSearchView;
 import com.yqritc.recyclerviewflexibledivider.HorizontalDividerItemDecoration;
 
 import org.jsoup.Jsoup;
@@ -19,20 +26,36 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MaterialSearchView.OnQueryTextListener {
     final String TAG = "MainActivity";
+    ArrayList<Song> songs = new ArrayList<>();
+    RecyclerView songsList;
+    MaterialSearchView searchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        final RecyclerView songsList = (RecyclerView) findViewById(R.id.songs_list);
-        final ArrayList<Song> songs = new ArrayList<>();
 
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        searchView = (MaterialSearchView) findViewById(R.id.search_view);
+
+        songsList = (RecyclerView) findViewById(R.id.songs_list);
+
+        final String path = "/";
         SongsAdapter adapter = new SongsAdapter(songs, new AdapterCallbacks() {
             @Override
             public void onClick(int position) {
-                Toast.makeText(MainActivity.this, Integer.toString(position), Toast.LENGTH_SHORT).show();
+                Song song = songs.get(position);
+
+                Intent intent = new Intent(MainActivity.this, FileDownloaderService.class);
+                intent.putExtra(Constants.PATH, path);
+                intent.putExtra(Constants.FILENAME, song.artist + " - " + song.title + ".mp3");
+                intent.putExtra(Constants.URL, song.url);
+
+                startService(intent);
             }
 
             @Override
@@ -58,13 +81,65 @@ public class MainActivity extends AppCompatActivity {
                     songsList.getAdapter().notifyItemInserted(i);
                 }
             }
-        }).execute("https://myzuka.fm/Hits/Top100Weekly");
+        }).execute("https://myzuka.fm/");
 
         if(!Utils.hasPermissions(this, Constants.PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, Constants.PERMISSIONS, 1);
-        } else {
-            Toast.makeText(this, "Нет прав на запись данных на карту памяти", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        MenuItem searchItem = menu.findItem(R.id.search);
+        searchView.setMenuItem(searchItem);
+        searchView.setOnQueryTextListener(this);
+
+        return true;
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        Log.d(TAG, "Submit");
+        if(query.length() > 0) {
+            new LoadData(new OnTaskCompleted() {
+                @Override
+                public void onTaskCompleted(Document doc) {
+                    songs.clear();
+                    songsList.getAdapter().notifyDataSetChanged();
+                    Elements tables = doc.select("tbody");
+                    Element table = tables.get(tables.size() - 1);
+                    Elements rows = table.select("tr");
+                    for(int i = 0; i < rows.size(); i++) {
+                        Element row = rows.get(i);
+                        Elements cols = row.select("td");
+                        songs.add(new Song(cols.get(0).select("a").text(),
+                                cols.get(1).select("a").text(), cols.get(1).select("a").attr("href")));
+                        songsList.getAdapter().notifyItemInserted(i);
+                    }
+                }
+            }).execute("https://myzuka.fm/Search?searchText=" + query);
+        } else {
+            new LoadData(new OnTaskCompleted() {
+                @Override
+                public void onTaskCompleted(Document doc) {
+                    Elements elements = doc.getElementsByAttribute("data-url");
+                    songs.clear();
+                    for(int i = 0; i < elements.size(); i++) {
+                        Element element = elements.get(i);
+                        songs.add(new Song(element.attr("data-title"), element.attr("data-url")));
+                        songsList.getAdapter().notifyItemInserted(i);
+                    }
+                }
+            }).execute("https://myzuka.fm/");
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        Log.d(TAG, "Change");
+        return false;
     }
 
     @Override
@@ -75,5 +150,13 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Права не предоставлены", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void showNoResults() {
+        //
+    }
+
+    private void hideNoresults() {
+        //
     }
 }

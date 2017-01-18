@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Myzuka</string>
+    <string name="notification_download_finished">Download finished</string>
+    <string name="notification_download_progress">Downloading</string>
+    <string name="notification_download_error">Download filed</string>
+    <string name="notification_download_error_file_deleted">File deleted or no longer available</string>
+    <string name="main_menu_search">Search</string>
+    <string name="main_menu_settings">Settings</string>
 </resources>
