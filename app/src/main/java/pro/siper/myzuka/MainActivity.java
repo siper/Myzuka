@@ -118,9 +118,9 @@ public class MainActivity extends AppCompatActivity
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if(requestCode == 1) {
-            Toast.makeText(this, "Права предоставлены", Toast.LENGTH_SHORT).show();
+            Helpers.makeToast(this, getString(R.string.main_permissions_granted));
         } else {
-            Toast.makeText(this, "Права не предоставлены", Toast.LENGTH_SHORT).show();
+            Helpers.makeToast(this, getString(R.string.main_permissions_not_granted));
         }
     }
 
