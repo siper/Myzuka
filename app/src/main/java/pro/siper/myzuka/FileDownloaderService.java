@@ -75,6 +75,11 @@ public class FileDownloaderService extends IntentService {
         mNotificationManager.notify(id, mNotificationBuilder.build());
     }
 
+    private void notifyProgress(int total, int current) {
+        mNotificationBuilder.setProgress(total, current, false);
+        mNotificationManager.notify(id, mNotificationBuilder.build());
+    }
+
     private void downloadFile(String link, String path, String filename) {
         mNotificationBuilder
                 .setContentTitle(getString(R.string.notification_download_progress))
@@ -100,21 +105,20 @@ public class FileDownloaderService extends IntentService {
             while ((count = input.read(data)) > 0) {
                 total += count;
 
-                mNotificationBuilder.setProgress(100, (int)((total * 100) / fileLength), false);
-                mNotificationManager.notify(id, mNotificationBuilder.build());
+                notifyProgress(100, (int)((total * 100) / fileLength));
 
                 output.write(data, 0, count);
                 output.flush();
             }
 
             mNotificationBuilder.setContentTitle(getString(R.string.notification_download_finished));
+
             output.close();
             input.close();
         } catch (IOException e) {
             mNotificationBuilder.setContentTitle(getString(R.string.notification_download_error));
         }
-        mNotificationBuilder.setProgress(0, 0, false);
         stopForeground(true);
-        mNotificationManager.notify(id, mNotificationBuilder.build());
+        notifyProgress(0, 0);
     }
 }
