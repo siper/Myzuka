@@ -1,6 +1,5 @@
 package pro.siper.myzuka;
 
-import android.util.Log;
 
 /**
  * Created by siper on 17.01.2017.
