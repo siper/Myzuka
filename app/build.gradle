@@ -25,16 +25,21 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
 
-    compile 'org.jsoup:jsoup:1.8.3'
+    compile 'com.hannesdorfmann.mosby:mvp:2.0.1'
 
-    compile 'com.android.support:design:25.1.0'
-    compile 'com.android.support:support-v4:25.1.0'
-    compile 'com.android.support:appcompat-v7:25.1.0'
+    compile 'com.squareup.okhttp3:okhttp:3.6.0'
+
+    compile 'org.jsoup:jsoup:1.8.3'
+    compile 'com.google.code.gson:gson:2.6.1'
+
+    compile 'com.android.support:design:25.2.0'
+    compile 'com.android.support:support-v4:25.2.0'
+    compile 'com.android.support:appcompat-v7:25.2.0'
     compile 'com.github.arimorty:floatingsearchview:2.0.3'
 
-    compile 'com.android.support:recyclerview-v7:25.1.0'
+    compile 'com.android.support:recyclerview-v7:25.2.0'
     compile 'com.yqritc:recyclerview-flexibledivider:1.4.0'
 
-    compile 'com.android.support:appcompat-v7:25.1.0'
+    compile 'com.android.support:appcompat-v7:25.2.0'
     testCompile 'junit:junit:4.12'
 }

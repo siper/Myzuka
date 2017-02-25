@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -14,11 +15,10 @@ import java.util.ArrayList;
  */
 
 public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongViewHolder> {
-    private ArrayList<Song> songs;
+    private ArrayList<Song> songs = new ArrayList<>();
     private AdapterCallbacks callbacks;
 
-    public SongsAdapter(ArrayList<Song> songs, AdapterCallbacks callbacks) {
-        this.songs = songs;
+    public SongsAdapter(AdapterCallbacks callbacks) {
         this.callbacks = callbacks;
     }
 
@@ -27,6 +27,16 @@ public class SongsAdapter extends RecyclerView.Adapter<SongsAdapter.SongViewHold
             return songs.get(position);
         }
         return null;
+    }
+
+    public void setSongs(ArrayList<Song> dataset) {
+        songs.clear();
+        songs.addAll(dataset);
+        notifyDataSetChanged();
+    }
+
+    public ArrayList<Song> getSongs() {
+        return songs;
     }
 
     @Override

@@ -3,27 +3,33 @@ package pro.siper.myzuka;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
-import android.widget.Toast;
+import android.text.TextUtils;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.arlib.floatingsearchview.FloatingSearchView;
+import com.arlib.floatingsearchview.suggestions.SearchSuggestionsAdapter;
 import com.arlib.floatingsearchview.suggestions.model.SearchSuggestion;
+import com.hannesdorfmann.mosby.mvp.MvpActivity;
 import com.yqritc.recyclerviewflexibledivider.HorizontalDividerItemDecoration;
 
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
 import java.util.ArrayList;
+import java.util.List;
 
-public class MainActivity extends AppCompatActivity
-        implements FloatingSearchView.OnQueryChangeListener, FloatingSearchView.OnSearchListener {
+public class MainActivity extends MvpActivity<MainView, MainPresenter>
+        implements MainView, FloatingSearchView.OnSearchListener, AdapterCallbacks,
+        FloatingSearchView.OnQueryChangeListener, SearchSuggestionsAdapter.OnBindSuggestionCallback {
     final String TAG = "MainActivity";
-    ArrayList<Song> songs = new ArrayList<>();
+
     RecyclerView songsList;
     FloatingSearchView floatingSearchView;
+    SongsAdapter adapter;
+    LinearLayout error;
+    LinearLayout noResults;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,28 +38,14 @@ public class MainActivity extends AppCompatActivity
 
         songsList = (RecyclerView) findViewById(R.id.songs_list);
         floatingSearchView = (FloatingSearchView) findViewById(R.id.floating_search_view);
-        floatingSearchView.setOnQueryChangeListener(this);
+        error = (LinearLayout) findViewById(R.id.error);
+        noResults = (LinearLayout) findViewById(R.id.no_results);
         floatingSearchView.setOnSearchListener(this);
+        floatingSearchView.setOnQueryChangeListener(this);
+        floatingSearchView.setOnBindSuggestionCallback(this);
+        floatingSearchView.showProgress();
 
-        final String path = "/";
-        SongsAdapter adapter = new SongsAdapter(songs, new AdapterCallbacks() {
-            @Override
-            public void onClick(int position) {
-                Song song = songs.get(position);
-
-                Intent intent = new Intent(MainActivity.this, FileDownloaderService.class);
-                intent.putExtra(Constants.PATH, path);
-                intent.putExtra(Constants.FILENAME, song.artist + " - " + song.title + ".mp3");
-                intent.putExtra(Constants.URL, song.url);
-
-                startService(intent);
-            }
-
-            @Override
-            public void onLongClick(int position) {
-                Toast.makeText(MainActivity.this, Integer.toString(position), Toast.LENGTH_SHORT).show();
-            }
-        });
+        adapter = new SongsAdapter(this);
         songsList.setAdapter(adapter);
 
         songsList.addItemDecoration(
@@ -62,73 +54,133 @@ public class MainActivity extends AppCompatActivity
                         .margin(16, 16)
                         .build());
 
-        new LoadData(new OnTaskCompleted() {
-            @Override
-            public void onTaskCompleted(Document doc) {
-                Elements elements = doc.getElementsByAttribute("data-url");
-                for(int i = 0; i < elements.size(); i++) {
-                    Element element = elements.get(i);
-                    songs.add(new Song(element.attr("data-title"), element.attr("data-url")));
-                    songsList.getAdapter().notifyItemInserted(i);
-                }
-            }
-        }).execute("https://myzuka.fm/");
-
         if(!Utils.hasPermissions(this, Constants.PERMISSIONS)) {
             ActivityCompat.requestPermissions(this, Constants.PERMISSIONS, 1);
         }
     }
 
     @Override
-    public void onSearchTextChanged(String oldQuery, String newQuery) {
-
-    }
-
-    @Override
     public void onSearchAction(String currentQuery) {
         floatingSearchView.showProgress();
-        if(currentQuery.length() > 3) {
-            new LoadData(new OnTaskCompleted() {
-                @Override
-                public void onTaskCompleted(Document doc) {
-                    songs.clear();
-                    songsList.getAdapter().notifyDataSetChanged();
-                    Elements tables = doc.select("tbody");
-                    Element table = tables.get(tables.size() - 1);
-                    Elements rows = table.select("tr");
-                    for(int i = 0; i < rows.size(); i++) {
-                        Element row = rows.get(i);
-                        Elements cols = row.select("td");
-                        songs.add(new Song(cols.get(0).select("a").text(),
-                                cols.get(1).select("a").text(), cols.get(1).select("a").attr("href")));
-                        songsList.getAdapter().notifyItemInserted(i);
-                    }
-                    floatingSearchView.hideProgress();
-                }
-            }).execute("https://myzuka.fm/Search?searchText=" + currentQuery);
-        }
+        presenter.search(currentQuery);
     }
 
     @Override
     public void onSuggestionClicked(SearchSuggestion searchSuggestion) {
+        MusicSuggestion suggestion = (MusicSuggestion) searchSuggestion;
+        switch (suggestion.getIcon()) {
+            case R.drawable.ic_audiotrack_black_24dp:
+                presenter.downloadSong(suggestion);
+                break;
+            default:
+                presenter.search(suggestion.getBody());
+                floatingSearchView.showProgress();
+        }
+        floatingSearchView.clearSuggestions();
+    }
+
+    @Override
+    public void onSearchTextChanged(String oldQuery, String newQuery) {
+        if(TextUtils.isEmpty(newQuery) || newQuery.length() < 2) {
+            floatingSearchView.clearSuggestions();
+            floatingSearchView.hideProgress();
+        } else {
+            floatingSearchView.showProgress();
+            presenter.loadSuggestions(newQuery);
+        }
+    }
+
+    @Override
+    public void showSuggestions(List<MusicSuggestion> suggestions) {
+        floatingSearchView.swapSuggestions(suggestions);
+        floatingSearchView.hideProgress();
+    }
+
+    @Override
+    public void onBindSuggestion(View suggestionView, ImageView leftIcon, TextView textView,
+                                 SearchSuggestion item, int itemPosition) {
+        MusicSuggestion musicSuggestion = (MusicSuggestion) item;
+        textView.setText(musicSuggestion.getBody());
+        leftIcon.setImageResource(musicSuggestion.getIcon());
+        leftIcon.setAlpha((float) 0.54);
+    }
+
+    @Override
+    public void onClick(int position) {
+        presenter.downloadSong(position);
+    }
+
+    @Override
+    public void onLongClick(int position) {
 
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void showErrorMessage() {
+        showError();
+        floatingSearchView.hideProgress();
+    }
+
+    @Override
+    public void showNoResultsMessage() {
+        showNoResults();
+        floatingSearchView.hideProgress();
+    }
+
+    @Override
+    public void showSongsList(ArrayList<Song> songs) {
+        hideAllErrors();
+        adapter.setSongs(songs);
+        floatingSearchView.hideProgress();
+    }
+
+    @Override
+    public void hideProgress() {
+        floatingSearchView.hideProgress();
+    }
+
+    @NonNull
+    @Override
+    public MainPresenter createPresenter() {
+        return new MainPresenter(this);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if(requestCode == 1) {
-            Toast.makeText(this, "Права предоставлены", Toast.LENGTH_SHORT).show();
+            hideError();
+            presenter.loadSongs();
         } else {
-            Toast.makeText(this, "Права не предоставлены", Toast.LENGTH_SHORT).show();
+            showError();
         }
     }
 
-    private void showNoResults() {
-        //
+    private void showError() {
+        hideNoResults();
+        songsList.setVisibility(View.GONE);
+        error.setVisibility(View.VISIBLE);
     }
 
-    private void hideNoresults() {
-        //
+    private void hideError() {
+        songsList.setVisibility(View.VISIBLE);
+        error.setVisibility(View.GONE);
+    }
+
+    private void showNoResults() {
+        hideError();
+        songsList.setVisibility(View.GONE);
+        noResults.setVisibility(View.VISIBLE);
+    }
+
+    private void hideNoResults() {
+        songsList.setVisibility(View.VISIBLE);
+        noResults.setVisibility(View.GONE);
+    }
+
+    private void hideAllErrors() {
+        noResults.setVisibility(View.GONE);
+        error.setVisibility(View.GONE);
     }
 }

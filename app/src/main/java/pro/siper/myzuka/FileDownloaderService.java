@@ -103,11 +103,15 @@ public class FileDownloaderService extends IntentService {
             byte data[] = new byte[1024];
             long total = 0;
             int count;
+            int percent = 0;
             while ((count = input.read(data)) > 0) {
                 total += count;
 
-                mNotificationBuilder.setProgress(100, (int)((total * 100) / fileLength), false);
-                mNotificationManager.notify(id, mNotificationBuilder.build());
+                if(percent < ((int)((total * 100) / fileLength))) {
+                    percent = (int)((total * 100) / fileLength);
+                    mNotificationBuilder.setProgress(100, percent, false);
+                    mNotificationManager.notify(id, mNotificationBuilder.build());
+                }
 
                 output.write(data, 0, count);
                 output.flush();

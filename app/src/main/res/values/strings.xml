@@ -6,4 +6,8 @@
     <string name="notification_download_error_file_deleted">File deleted or no longer available</string>
     <string name="main_menu_search">Search</string>
     <string name="main_menu_settings">Settings</string>
+    <string name="main_window_error_title">Something wrong</string>
+    <string name="main_window_error_substring">Network or permissions error</string>
+    <string name="main_window_no_results_title">No results found</string>
+    <string name="main_window_no_results_substring">Try again or change search query</string>
 </resources>
