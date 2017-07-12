@@ -24,7 +24,7 @@ public class MainPresenter extends MvpBasePresenter<MainView> implements DataCha
 
     public void loadSongs() {
         if(Utils.isOnline(context) && Utils.hasPermissions(context, Constants.PERMISSIONS)) {
-            model.loadData("https://myzuka.me");
+            model.loadData(Constants.MAIN_URL);
         } else {
             if(isViewAttached()) {
                 getView().showErrorMessage();
@@ -34,7 +34,7 @@ public class MainPresenter extends MvpBasePresenter<MainView> implements DataCha
 
     public void loadSuggestions(String query) {
         if(Utils.isOnline(context) && Utils.hasPermissions(context, Constants.PERMISSIONS)) {
-            model.loadSuggestions("https://myzuka.me/Search/Suggestions?term=" + query);
+            model.loadSuggestions(Constants.MAIN_URL + "/Search/Suggestions?term=" + query);
         } else {
             if(isViewAttached()) {
                 getView().showErrorMessage();
@@ -69,7 +69,7 @@ public class MainPresenter extends MvpBasePresenter<MainView> implements DataCha
         Intent intent = new Intent(context, FileDownloaderService.class);
         intent.putExtra(Constants.PATH, "/Music/");
         intent.putExtra(Constants.FILENAME, song.getBody() + ".mp3");
-        intent.putExtra(Constants.URL, "http://myzuka.me" + song.getUrl());
+        intent.putExtra(Constants.URL, Constants.MAIN_URL + song.getUrl());
 
         context.startService(intent);
     }
