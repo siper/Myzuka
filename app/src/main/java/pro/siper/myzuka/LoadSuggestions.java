@@ -1,10 +1,8 @@
 package pro.siper.myzuka;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.google.gson.Gson;
-
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -14,8 +12,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.net.ssl.HttpsURLConnection;
 
 /**
  * Created by siper on 25.02.2017.
@@ -38,7 +34,7 @@ public class LoadSuggestions extends AsyncTask<String, String, List<MusicSuggest
             HttpURLConnection connection = (HttpURLConnection)url.openConnection();
             connection.setRequestMethod("GET");
             connection.addRequestProperty("accept", "application/json");
-            connection.addRequestProperty("referer", "https://myzuka.fm/");
+            connection.addRequestProperty("referer", Constants.MAIN_URL + "/");
 
             InputStream it = new BufferedInputStream(connection.getInputStream());
             InputStreamReader read = new InputStreamReader(it);

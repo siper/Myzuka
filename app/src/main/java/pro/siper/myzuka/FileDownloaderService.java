@@ -1,13 +1,11 @@
 package pro.siper.myzuka;
 
 import android.app.IntentService;
-import android.app.Notification;
 import android.app.NotificationManager;
-import android.content.Intent;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Environment;
 import android.support.v7.app.NotificationCompat;
-import android.util.Log;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -15,16 +13,12 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
-
-import javax.net.ssl.HttpsURLConnection;
 
 
 public class FileDownloaderService extends IntentService {
@@ -61,7 +55,7 @@ public class FileDownloaderService extends IntentService {
                     Elements elements = doc.select("a[href*=/Download/]");
                     if(!elements.isEmpty()) {
                         Element elem = elements.get(0);
-                        link = "http://myzuka.fm" + elem.attr("href");
+                        link = Constants.MAIN_URL + elem.attr("href");
                         downloadFile(link, path, filename);
                     } else {
                         notifyError();

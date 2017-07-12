@@ -49,7 +49,7 @@ public class MainModel implements MusicCallback, SuggestionsCallback {
             cancelLoadingData();
             isSearching = true;
             dataLoader = new LoadData(this);
-            dataLoader.execute("https://myzuka.fm/Search?searchText=" + query);
+            dataLoader.execute(Constants.MAIN_URL + "/Search?searchText=" + query);
         }
     }
 
